@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D.H.L - Sistema de Detetives v5.0</title>
+    
+    <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+
+    <style>
+        @font-face { font-family: 'Aloja'; src: url('Aloja.ttf'); }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: linear-gradient(to right, #f2a6f9, #fff7c0);
+            height: 100vh; display: flex; justify-content: center; align-items: center;
+            font-family: 'Aloja', sans-serif; overflow: hidden;
+        }
+
+        #music-control {
+            position: fixed; top: 20px; right: 20px; z-index: 1000;
+            background: #9b6ccf; color: white; border: 2px solid #ff33cc;
+            padding: 10px; border-radius: 50%; width: 50px; height: 50px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; transition: 0.3s;
+        }
+
+        /* --- TELA 1 --- */
+        #screen-1 { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .logo-text { font-size: 100px; color: #9b6ccf; }
+        .wave-separator {
+            width: 180px; height: 45px; background-color: #ff33cc; margin: 10px auto 40px auto;
+            clip-path: polygon(0% 20%, 25% 0%, 50% 20%, 75% 0%, 100% 20%, 100% 80%, 75% 100%, 50% 80%, 25% 100%, 0% 80%);
+        }
+        .system-label { font-size: 28px; color: #b388eb; text-transform: uppercase; }
+        .system-label b { color: #ff007f; }
+        .detectives-names { font-size: 55px; color: #ff75c3; margin: 20px 0; }
+        .location-info { font-size: 32px; color: #6347d1; margin-bottom: 40px; }
+        #btn-avancar { background-color: #9b6ccf; color: #26c4f5; font-size: 40px; padding: 10px 80px; border: none; border-radius: 30px; cursor: pointer; }
+
+        /* --- TELA 2 --- */
+        #screen-2 { display: none; width: 100vw; height: 100vh; flex-direction: row; }
+        .sidebar { width: 320px; background-color: #7d4db3; color: white; display: flex; flex-direction: column; padding: 20px; border-right: 5px solid #ff33cc; }
+        
+        .type-selector { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; margin-bottom: 20px; }
+        .btn-type { background: #9b6ccf; border: 2px solid #ff33cc; color: white; padding: 5px 10px; cursor: pointer; font-size: 12px; border-radius: 5px; margin: 2px; }
+        .btn-type.active { background: #ff33cc; font-weight: bold; }
+
+        .work-area { flex-grow: 1; padding: 40px; display: flex; flex-direction: column; align-items: center; position: relative; }
+        
+        .notepad-container { width: 100%; max-width: 800px; background-color: #9b6ccf; padding: 30px; border-radius: 15px; box-shadow: 10px 10px 0px #ff33cc; }
+        .notepad-textarea { width: 100%; height: 400px; background: transparent; border: none; outline: none; color: white; font-family: 'Aloja', sans-serif; font-size: 28px; line-height: 45px; resize: none; background-image: linear-gradient(#ff007f 1px, transparent 1px); background-size: 100% 45px; }
+
+        #spreadsheet-view { display: none; width: 100%; max-width: 900px; }
+        .dhl-table { width: 100%; border-collapse: collapse; background: #9b6ccf; box-shadow: 10px 10px 0px #ff33cc; border-radius: 10px; }
+        .dhl-table th { background: #7d4db3; color: #26c4f5; padding: 10px; border: 1px solid #ff007f; }
+        .dhl-table input { width: 100%; background: transparent; border: none; color: white; font-family: 'Aloja', sans-serif; font-size: 18px; text-align: center; }
+
+        #mindmap-view { display: none; width: 100%; height: 500px; background: rgba(155, 108, 207, 0.2); border: 3px dashed #9b6ccf; border-radius: 20px; position: relative; overflow: hidden; }
+        .mindmap-node { position: absolute; padding: 15px; background: #ff33cc; color: white; border-radius: 10px; cursor: move; min-width: 150px; box-shadow: 5px 5px 0px #9b6ccf; }
+        .mindmap-node input { background: transparent; border: none; color: white; width: 100%; text-align: center; font-family: 'Aloja'; font-size: 18px; }
+
+        #btn-main-action { margin-top: 30px; background-color: #26c4f5; color: #9b6ccf; font-size: 30px; padding: 10px 60px; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; }
+        .btn-add-pista { background: #ff33cc; color: white; padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; margin-bottom: 10px; font-family: 'Aloja'; }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop> <source src="musica.mp3" type="audio/mpeg"> </audio>
+    <button id="music-control">🔇</button>
+
+    <div id="screen-1">
+        <div class="logo-text">D.H.L</div>
+        <div class="wave-separator"></div>
+        <p class="system-label">SISTEMA DE: <b>DETETIVES</b></p>
+        <h1 class="detectives-names">DETETIVES: Helena e Lorena</h1>
+        <div class="location-info">(Mairiporã, interior de SP,<br>HARAS EL PASO)</div>
+        <button id="btn-avancar">AVANÇAR</button>
+    </div>
+
+    <div id="screen-2">
+        <div class="sidebar">
+            <h2>ARQUIVOS</h2>
+            <div class="type-selector">
+                <button class="btn-type active" id="btn-docx">.DOCX</button>
+                <button class="btn-type" id="btn-xlsx">.XLSX</button>
+                <button class="btn-type" id="btn-pptx">.PPTX</button>
+            </div>
+            <ul id="notesList" style="list-style:none; flex-grow:1; overflow-y:auto;"></ul>
+            <button style="background:#ff33cc; color:white; border:none; border-radius:50%; width:50px; height:50px; font-size:30px; cursor:pointer;" onclick="limparTudo()">+</button>
+        </div>
+
+        <div class="work-area">
+            <div id="note-view" class="notepad-container">
+                <textarea id="noteInput" class="notepad-textarea" placeholder="Relatório em texto..."></textarea>
+            </div>
+
+            <div id="spreadsheet-view">
+                <table class="dhl-table" id="dhlTable">
+                    <thead><tr><th>DATA</th><th>SUSPEITO</th><th>EVIDÊNCIA</th><th>LOCAL</th></tr></thead>
+                    <tbody>
+                        <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+                        <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+                        <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="mindmap-view">
+                <button class="btn-add-pista" onclick="adicionarPista()">+ ADICIONAR PISTA</button>
+            </div>
+
+            <button id="btn-main-action">BAIXAR .DOCX</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let modo = 'DOCX';
+            const music = document.getElementById('bg-music');
+            const musicBtn = document.getElementById('music-control');
+            const btnMain = document.getElementById('btn-main-action');
+
+            musicBtn.addEventListener('click', () => {
+                if (music.paused) { music.play(); musicBtn.innerText = '🔊'; }
+                else { music.pause(); musicBtn.innerText = '🔇'; }
+            });
+
+            document.getElementById('btn-avancar').addEventListener('click', () => {
+                if(prompt("SENHA:") === "1451") {
+                    document.getElementById('screen-1').style.display = 'none';
+                    document.getElementById('screen-2').style.display = 'flex';
+                    music.play().then(() => musicBtn.innerText = '🔊').catch(() => {});
+                }
+            });
+
+            document.getElementById('btn-docx').addEventListener('click', () => mudarModo('DOCX'));
+            document.getElementById('btn-xlsx').addEventListener('click', () => mudarModo('XLSX'));
+            document.getElementById('btn-pptx').addEventListener('click', () => mudarModo('PPTX'));
+
+            function mudarModo(novoModo) {
+                modo = novoModo;
+                document.querySelectorAll('.btn-type').forEach(b => b.classList.remove('active'));
+                document.getElementById('btn-' + modo.toLowerCase()).classList.add('active');
+                
+                document.getElementById('note-view').style.display = (modo === 'DOCX') ? 'block' : 'none';
+                document.getElementById('spreadsheet-view').style.display = (modo === 'XLSX') ? 'block' : 'none';
+                document.getElementById('mindmap-view').style.display = (modo === 'PPTX') ? 'block' : 'none';
+                
+                btnMain.innerText = 'BAIXAR .' + modo;
+            }
+
+            window.adicionarPista = function() {
+                const map = document.getElementById('mindmap-view');
+                const node = document.createElement('div');
+                node.className = 'mindmap-node';
+                node.style.left = '50px'; node.style.top = '100px';
+                node.innerHTML = `<input type="text" placeholder="Pista...">`;
+                
+                node.onmousedown = function(e) {
+                    let shiftX = e.clientX - node.getBoundingClientRect().left;
+                    let shiftY = e.clientY - node.getBoundingClientRect().top;
+                    document.onmousemove = function(e) {
+                        node.style.left = e.clientX - map.getBoundingClientRect().left - shiftX + 'px';
+                        node.style.top = e.clientY - map.getBoundingClientRect().top - shiftY + 'px';
+                    };
+                    document.onmouseup = function() { document.onmousemove = null; };
+                };
+                map.appendChild(node);
+            };
+
+            btnMain.addEventListener('click', () => {
+                if(modo === 'DOCX') {
+                    const texto = document.getElementById('noteInput').value;
+                    const doc = new docx.Document({ sections: [{ children: [new docx.Paragraph(texto)] }] });
+                    docx.Packer.toBlob(doc).then(blob => saveAs(blob, "Relatorio-DHL.docx"));
+                } else if(modo === 'XLSX') {
+                    const table = document.getElementById("dhlTable");
+                    const wb = XLSX.utils.table_to_book(table);
+                    XLSX.writeFile(wb, "Planilha-DHL.xlsx");
+                } else if(modo === 'PPTX') {
+                    let pres = new PptxGenJS();
+                    const pistas = document.querySelectorAll('.mindmap-node input');
+                    pistas.forEach((p, i) => {
+                        let slide = pres.addSlide();
+                        slide.addText("PISTA #" + (i+1), { x:1, y:1, color:'ff33cc', fontSize:24 });
+                        slide.addText(p.value, { x:1, y:2, fontSize:18 });
+                    });
+                    pres.writeFile({ fileName: "Mapa-Mental-DHL.pptx" });
+                }
+            });
+
+            window.limparTudo = function() {
+                document.getElementById('noteInput').value = "";
+                document.querySelectorAll('input').forEach(i => i.value = "");
+                document.querySelectorAll('.mindmap-node').forEach(n => n.remove());
+            };
+        });
+    </script>
+</body>
+</html>
